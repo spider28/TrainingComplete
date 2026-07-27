@@ -61,7 +61,8 @@ public sealed class CourseService(TrainingDbContext dbContext, IClock clock)
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         var course = await dbContext.Courses
-            .FromSqlInterpolated($"""SELECT * FROM "Courses" WHERE "Id" = {courseId} FOR UPDATE""")
+            .FromSqlInterpolated(
+                $"""SELECT course_row.*, course_row.xmin FROM "Courses" AS course_row WHERE "Id" = {courseId} FOR UPDATE""")
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("course_not_found", "The course was not found.");
 
@@ -118,4 +119,3 @@ public sealed class CourseService(TrainingDbContext dbContext, IClock clock)
             enrollment.EnrolledAt);
     }
 }
-

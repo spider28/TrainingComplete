@@ -1,8 +1,8 @@
 # Training Completion Platform
 
-一个用于学习事件驱动架构的全栈项目。课程完成的核心写入同步提交到 PostgreSQL；证书、报表和通知通过 Transactional Outbox、Azure Service Bus Topic 和三个幂等 Azure Functions 消费者异步处理。
+A full-stack project for learning event-driven architecture. The core course-completion write is committed synchronously to PostgreSQL. Certificate generation, reporting, and notification are processed asynchronously through a Transactional Outbox, an Azure Service Bus topic, and three idempotent Azure Functions consumers.
 
-## 架构
+## Architecture
 
 ```text
 React / TypeScript
@@ -24,29 +24,29 @@ Function       Function     Function
 Blob Storage  Summary table NotificationLog
 ```
 
-消息是 at-least-once 投递。所有消费者在 PostgreSQL 中使用 `(EventId, ConsumerName)` 去重。证书 Blob 名由 Completion ID 确定，因此数据库提交前后发生崩溃也能安全重试。
+Message delivery is at least once. Every consumer uses `(EventId, ConsumerName)` in PostgreSQL for deduplication. Certificate blob names are derived from the completion ID, so retries remain safe if a process fails before or after the database commit.
 
-## 目录
+## Repository Structure
 
 ```text
-src/             Domain、Application、Infrastructure、API、Functions
-tests/           xUnit 单元测试与 PostgreSQL 集成测试
-web/             React、Vite、TanStack Query
-infrastructure/  AzureRM Terraform 和远程 state bootstrap
-scripts/         本地配置与 smoke test
-.github/         CI 和手动应用部署
+src/             Domain, Application, Infrastructure, API, and Functions
+tests/           xUnit unit tests and PostgreSQL integration tests
+web/             React, Vite, and TanStack Query
+infrastructure/  AzureRM Terraform and remote-state bootstrap
+scripts/         Local configuration and smoke tests
+.github/         CI and manually approved application deployment
 ```
 
-## 前置工具
+## Prerequisites
 
 - .NET SDK 10
-- Node.js 24 和 npm
-- PostgreSQL 16，或由 Terraform 创建的 Azure PostgreSQL
+- Node.js 24 and npm
+- PostgreSQL 16, or Azure Database for PostgreSQL created by Terraform
 - Terraform 1.15.x
 - Azure CLI
 - Azure Functions Core Tools v4
 
-检查版本：
+Check the installed versions:
 
 ```powershell
 dotnet --version
@@ -57,27 +57,27 @@ az version
 func --version
 ```
 
-本仓库的 PowerShell 示例使用 `npm.cmd`，不需要修改 PowerShell execution policy。
+The PowerShell examples use `npm.cmd`, so changing the PowerShell execution policy is not required.
 
-## 1. 创建 Azure 开发资源
+## 1. Create the Azure Development Resources
 
-Terraform 默认创建：
+By default, Terraform creates:
 
-- Resource Group
-- PostgreSQL Flexible Server 16：B1ms、32 GB、7 天备份
-- `training_dev` 和 `training_test`
-- 仅允许指定开发者 IPv4 的 PostgreSQL firewall rule
-- Service Bus Standard、`course-completed` topic、三个 subscriptions
-- 本地开发用 Send/Listen SAS rule
-- Standard LRS Storage 和私有 `certificates` container
-- Log Analytics 和 Application Insights
-- 可选 Resource Group budget
+- A resource group
+- PostgreSQL Flexible Server 16 with B1ms compute, 32 GB storage, and 7-day backup retention
+- `training_dev` and `training_test` databases
+- A PostgreSQL firewall rule limited to the specified developer IPv4 address
+- A Standard Service Bus namespace, the `course-completed` topic, and three subscriptions
+- A local-development SAS rule with Send and Listen permissions
+- Standard LRS Storage and a private `certificates` container
+- Log Analytics and Application Insights
+- An optional resource-group budget
 
-默认 `deploy_compute=false`，不会创建 App Service、Function App、Static Web App 或 Key Vault。
+The default is `deploy_compute=false`, so Terraform does not create App Service, Function App, Static Web Apps, or Key Vault resources.
 
 ```powershell
 Copy-Item infrastructure/terraform.tfvars.example infrastructure/terraform.tfvars
-$env:TF_VAR_postgres_admin_password = "使用一个长随机密码"
+$env:TF_VAR_postgres_admin_password = "use-a-long-random-password"
 
 az login
 az account set --subscription "SUBSCRIPTION_NAME_OR_ID"
@@ -88,34 +88,34 @@ terraform -chdir=infrastructure validate
 terraform -chdir=infrastructure plan -out tfplan
 ```
 
-逐项检查 plan。确认资源、区域和预估成本后，由你执行：
+Review every item in the plan. After confirming the resources, region, and estimated cost, apply the reviewed plan yourself:
 
 ```powershell
 terraform -chdir=infrastructure apply tfplan
 ```
 
-不要提交 `terraform.tfvars`、state 或 plan 文件。敏感 output 仍会进入 Terraform state。
+Do not commit `terraform.tfvars`, state files, or plan files. Sensitive output values are still stored in Terraform state.
 
-## 2. 配置本地 secrets
+## 2. Configure Local Secrets
 
-Terraform apply 完成后：
+After Terraform apply finishes, run:
 
 ```powershell
 .\scripts\configure-local.ps1
 ```
 
-脚本读取 `terraform output -json`，配置：
+The script reads `terraform output -json` and configures:
 
-- API 的 .NET user secrets
-- Functions 的 ignored `local.settings.json`
-- React 的 ignored `.env.local`
+- .NET user secrets for the API
+- The ignored Functions `local.settings.json`
+- The ignored React `.env.local`
 
-脚本不会把密码输出到终端。也可以参考：
+The script does not print passwords to the terminal. You can also refer to:
 
 - `src/TrainingCompletion.Functions/local.settings.json.example`
 - `web/training-completion-web/.env.example`
 
-## 3. 创建数据库 schema
+## 3. Create the Database Schema
 
 ```powershell
 dotnet tool restore
@@ -124,29 +124,29 @@ dotnet ef database update `
   --startup-project src/TrainingCompletion.Api
 ```
 
-初始 migration 创建完整 schema，并预置：
+The initial migration creates the complete schema and seeds:
 
 - `learner-1001`
 - `course-2001`
 - `course-2002`
 - `course-2003`
 
-## 4. 本地运行
+## 4. Run Locally
 
-终端 1：
+Terminal 1:
 
 ```powershell
 dotnet run --project src/TrainingCompletion.Api
 ```
 
-终端 2：
+Terminal 2:
 
 ```powershell
 Set-Location src/TrainingCompletion.Functions
 func start
 ```
 
-终端 3：
+Terminal 3:
 
 ```powershell
 Set-Location web/training-completion-web
@@ -154,9 +154,9 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-打开 `http://localhost:5173`。API 为 `http://localhost:5000`，Functions host 通常为 `http://localhost:7071`。
+Open `http://localhost:5173`. The API runs at `http://localhost:5000`, and the Functions host normally runs at `http://localhost:7071`.
 
-快速验证 API：
+Run a quick API verification:
 
 ```powershell
 .\scripts\verify-local.ps1
@@ -174,7 +174,7 @@ GET    /api/admin/diagnostics
 GET    /health
 ```
 
-报名 body：
+Enrollment request body:
 
 ```json
 {
@@ -182,7 +182,7 @@ GET    /health
 }
 ```
 
-完成请求：
+Completion request:
 
 ```http
 POST /api/course-completions
@@ -197,11 +197,11 @@ Content-Type: application/json
 }
 ```
 
-首次成功返回 `201 Created`。相同 key 和相同 body 的重试返回同一个 Completion、`200 OK` 和 `Idempotency-Replayed: true`。相同 key 配合不同 body 返回 RFC 7807 `409 Conflict`。
+The initial successful request returns `201 Created`. Retrying the same body with the same key returns the same completion with `200 OK` and `Idempotency-Replayed: true`. Reusing the key with a different body returns an RFC 7807 `409 Conflict`.
 
-## 测试
+## Testing
 
-后端：
+Backend:
 
 ```powershell
 dotnet restore TrainingCompletionPlatform.slnx
@@ -209,16 +209,16 @@ dotnet build TrainingCompletionPlatform.slnx --no-restore
 dotnet test TrainingCompletionPlatform.slnx --no-build
 ```
 
-需要 PostgreSQL 的测试只会在设置 `POSTGRES_TEST_CONNECTION` 后运行，并严格检查数据库名必须是 `training_test`：
+Tests that require PostgreSQL run only when `POSTGRES_TEST_CONNECTION` is set. They enforce that the database name is exactly `training_test`:
 
 ```powershell
 $env:POSTGRES_TEST_CONNECTION = "Host=...;Database=training_test;Username=...;Password=...;SSL Mode=Require"
 dotnet test tests/TrainingCompletion.IntegrationTests
 ```
 
-如果连接串指向 `training_dev`，测试会拒绝执行 destructive cleanup。
+If the connection string points to `training_dev`, the tests refuse to perform destructive cleanup.
 
-前端：
+Frontend:
 
 ```powershell
 Set-Location web/training-completion-web
@@ -229,7 +229,7 @@ npm.cmd test -- --run
 npm.cmd run build
 ```
 
-Terraform：
+Terraform:
 
 ```powershell
 terraform fmt -check -recursive
@@ -239,54 +239,52 @@ terraform -chdir=infrastructure/bootstrap init -backend=false
 terraform -chdir=infrastructure/bootstrap validate
 ```
 
-## 故障、重试与诊断
+## Failures, Retries, and Diagnostics
 
-- Outbox 每 2 秒读取最多 20 条。
-- 只有 Service Bus send 成功后才写 `PublishedAt`。
-- 发布失败采用 5 秒至 5 分钟的封顶退避。
-- Subscription `MaxDeliveryCount=5`。
-- 第五次消费者失败会记录脱敏的 `ConsumerFailure`、将步骤标记为 `Failed` 并 dead-letter。
-- `/api/admin/diagnostics` 只返回计数、attempt 和最多 500 字符的脱敏错误，不返回 stack trace、connection string 或 payload。
-- API 接受或生成 `X-Correlation-ID`，并把它传到事件和结构化日志。
+- The outbox publisher reads at most 20 messages every 2 seconds.
+- `PublishedAt` is written only after a successful Service Bus send.
+- Publishing failures use capped backoff from 5 seconds to 5 minutes.
+- Each subscription has `MaxDeliveryCount=5`.
+- A fifth consumer failure records a sanitized `ConsumerFailure`, marks the workflow step as `Failed`, and dead-letters the message.
+- `/api/admin/diagnostics` returns only counts, attempt information, and sanitized errors of at most 500 characters. It does not return stack traces, connection strings, or event payloads.
+- The API accepts or generates `X-Correlation-ID` and passes it to the event and structured logs.
 
-## 部署计算资源
+## Deploy the Compute Resources
 
-本地端到端测试成功后，把 `terraform.tfvars` 中的值改为：
+After local end-to-end testing succeeds, change this value in `terraform.tfvars`:
 
 ```hcl
 deploy_compute = true
 ```
 
-重新运行 `terraform plan`。新增资源包括：
+Run `terraform plan` again. The additional resources include:
 
 - Linux App Service B1
-- Functions Flex Consumption / .NET 10 isolated
+- Functions Flex Consumption with .NET 10 isolated worker
 - Static Web Apps Free
 - Key Vault
-- API 和 Functions 的 system-assigned managed identities
-- Service Bus、Blob 和 Key Vault 最小权限 role assignments
+- System-assigned managed identities for the API and Functions
+- Least-privilege Service Bus, Blob Storage, and Key Vault role assignments
 
-由于 App Service/Flex Consumption 的 outbound IP 会变化，演示环境在启用 compute
-时增加 Azure PostgreSQL 的 `0.0.0.0` “Allow Azure services”规则。它不会在
-`deploy_compute=false` 时创建；处理真实数据前应改为 VNet/private endpoint。
+Because App Service and Flex Consumption outbound IP addresses can change, enabling compute adds Azure PostgreSQL's `0.0.0.0` "Allow Azure services" firewall rule. This rule is not created when `deploy_compute=false`. Replace it with VNet and private endpoint connectivity before processing real data.
 
-GitHub `CI` workflow 自动执行 build、test、npm audit 和 Terraform validate。`Deploy applications` 只能手动触发，并要求 GitHub `development` Environment 审批；它不会执行 Terraform apply。
+The GitHub `CI` workflow automatically runs builds, tests, npm audit, and Terraform validation. The `Deploy applications` workflow can only be triggered manually and requires approval through the GitHub `development` environment. It does not execute Terraform apply.
 
-需要配置 GitHub：
+Configure these GitHub settings:
 
-- Secrets：`AZURE_CLIENT_ID`、`AZURE_TENANT_ID`、`AZURE_SUBSCRIPTION_ID`、`AZURE_STATIC_WEB_APPS_API_TOKEN`
-- Variables：`API_APP_NAME`、`FUNCTION_APP_NAME`、`API_BASE_URL`
-- Azure OIDC federated credential
+- Secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, and `AZURE_STATIC_WEB_APPS_API_TOKEN`
+- Variables: `API_APP_NAME`, `FUNCTION_APP_NAME`, and `API_BASE_URL`
+- An Azure OIDC federated credential
 
-部署后：
+After deployment:
 
 ```powershell
 .\scripts\verify-deployed.ps1 -ApiBaseUrl "https://YOUR_API_HOST"
 ```
 
-## 远程 Terraform state
+## Remote Terraform State
 
-初期使用本地 state。需要 CI 或团队协作前：
+Use local state initially. Before using CI for infrastructure or collaborating with a team:
 
 ```powershell
 terraform -chdir=infrastructure/bootstrap init
@@ -294,20 +292,20 @@ terraform -chdir=infrastructure/bootstrap plan -out tfplan
 terraform -chdir=infrastructure/bootstrap apply tfplan
 ```
 
-根据 bootstrap output 创建 ignored `infrastructure/backend.hcl`，取消 `versions.tf` 中的 `backend "azurerm" {}` 注释，然后：
+Create the ignored `infrastructure/backend.hcl` from the bootstrap outputs, uncomment `backend "azurerm" {}` in `versions.tf`, and then run:
 
 ```powershell
 terraform -chdir=infrastructure init -migrate-state -backend-config=backend.hcl
 ```
 
-## 成本和清理
+## Cost and Cleanup
 
-- 先保持 `deploy_compute=false`。
-- 停用 PostgreSQL compute 时仍会收取 storage 费用，而且不会无限期保持停止。
-- Service Bus Standard、Storage、Log Analytics 等在没有流量时仍可能产生成本。
-- `terraform destroy` 会删除数据库和证书，无法恢复。
+- Keep `deploy_compute=false` until the local workflow is ready.
+- Stopping PostgreSQL compute does not stop storage charges, and the server does not remain stopped indefinitely.
+- Service Bus Standard, Storage, Log Analytics, and other provisioned services can incur charges without active traffic.
+- `terraform destroy` permanently deletes databases and certificates.
 
-长期暂停前先导出需要的数据，然后检查销毁计划：
+Before a long pause, export any data you need and review the destroy plan:
 
 ```powershell
 terraform -chdir=infrastructure plan -destroy
