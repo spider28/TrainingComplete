@@ -1,0 +1,12 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "<storage-connection-string>",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "ServiceBusConnection": "<service-bus-connection-string>",
+    "PostgresConnection": "<postgres-connection-string>",
+    "Storage__ConnectionString": "<storage-connection-string>",
+    "Storage__CertificateContainer": "certificates",
+    "AzureWebJobs.CertificateConsumerFunction.Disabled": "false"
+  }
+}

@@ -1,0 +1,14 @@
+subscription_id          = "00000000-0000-0000-0000-000000000000"
+location                 = "centralus"
+project_name             = "trainingcomplete"
+environment_name         = "dev"
+postgres_admin_username  = "trainingadmin"
+developer_public_ip      = "203.0.113.10"
+budget_notification_email = "you@example.com"
+monthly_budget_amount    = 30
+deploy_compute           = false
+
+# Do not put postgres_admin_password here.
+# Set it in PowerShell:
+# $env:TF_VAR_postgres_admin_password = "use-a-long-random-password"
+

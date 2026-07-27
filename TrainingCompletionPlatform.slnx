@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TrainingCompletion.Domain/TrainingCompletion.Domain.csproj" />
+    <Project Path="src/TrainingCompletion.Application/TrainingCompletion.Application.csproj" />
+    <Project Path="src/TrainingCompletion.Infrastructure/TrainingCompletion.Infrastructure.csproj" />
+    <Project Path="src/TrainingCompletion.Api/TrainingCompletion.Api.csproj" />
+    <Project Path="src/TrainingCompletion.Functions/TrainingCompletion.Functions.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TrainingCompletion.UnitTests/TrainingCompletion.UnitTests.csproj" />
+    <Project Path="tests/TrainingCompletion.IntegrationTests/TrainingCompletion.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
+

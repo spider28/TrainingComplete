@@ -1,0 +1,5 @@
+resource_group_name  = "rg-trainingcomplete-tfstate"
+storage_account_name = "sttrainingcompletetf1234"
+container_name       = "tfstate"
+key                  = "trainingcomplete/dev.tfstate"
+

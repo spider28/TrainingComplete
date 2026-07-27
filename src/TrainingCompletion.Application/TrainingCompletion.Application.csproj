@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\TrainingCompletion.Domain\TrainingCompletion.Domain.csproj" />
+  </ItemGroup>
+</Project>
+

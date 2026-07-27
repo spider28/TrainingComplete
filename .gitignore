@@ -1,0 +1,35 @@
+# .NET
+**/bin/
+**/obj/
+.vs/
+TestResults/
+*.user
+*.suo
+
+# Node
+**/node_modules/
+**/dist/
+**/.env.local
+**/.env.*.local
+
+# Local settings and secrets
+**/local.settings.json
+appsettings.Local.json
+*.pfx
+*.pem
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+*.tfplan
+terraform.tfvars
+backend.hcl
+.terraform.lock.hcl.bak
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
