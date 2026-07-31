@@ -32,6 +32,12 @@ resource "azurerm_postgresql_flexible_server" "main" {
   geo_redundant_backup_enabled  = false
   public_network_access_enabled = true
   tags                          = local.tags
+
+  lifecycle {
+    # Azure assigns a zone when none is requested. Ignore that service-managed
+    # value so later applies do not attempt an unsupported zone reset.
+    ignore_changes = [zone]
+  }
 }
 
 resource "azurerm_postgresql_flexible_server_database" "dev" {
@@ -171,7 +177,7 @@ resource "azurerm_consumption_budget_resource_group" "main" {
 resource "azurerm_key_vault" "main" {
   count = var.deploy_compute ? 1 : 0
 
-  name                       = "kv-${local.prefix}-${local.suffix}"
+  name                       = "kv-${substr(local.prefix, 0, 14)}-${local.suffix}"
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
@@ -225,10 +231,11 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
-    always_on           = true
-    health_check_path   = "/health"
-    minimum_tls_version = "1.2"
-    ftps_state          = "Disabled"
+    always_on                         = true
+    health_check_path                 = "/health"
+    health_check_eviction_time_in_min = 5
+    minimum_tls_version               = "1.2"
+    ftps_state                        = "Disabled"
     application_stack {
       dotnet_version = "10.0"
     }
@@ -306,7 +313,6 @@ resource "azurerm_function_app_flex_consumption" "consumers" {
     "ServiceBusConnection__fullyQualifiedNamespace" = trimsuffix(trimprefix(azurerm_servicebus_namespace.main.endpoint, "sb://"), "/")
     "Storage__ServiceUri"                           = azurerm_storage_account.main.primary_blob_endpoint
     "Storage__CertificateContainer"                 = azurerm_storage_container.certificates.name
-    "FUNCTIONS_WORKER_RUNTIME"                      = "dotnet-isolated"
   }
 }
 
