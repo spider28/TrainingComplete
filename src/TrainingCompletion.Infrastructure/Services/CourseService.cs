@@ -36,15 +36,21 @@ public sealed class CourseService(TrainingDbContext dbContext, IClock clock)
                 .Where(x => x.LearnerId == learnerId)
                 .ToDictionaryAsync(x => x.CourseId, x => x.Id, cancellationToken);
 
-        return courses.Select(course => new CourseDto(
-            course.Id,
-            course.Title,
-            course.Description,
-            course.Capacity,
-            Math.Max(0, course.Capacity - enrollmentCounts.GetValueOrDefault(course.Id)),
-            course.IsActive,
-            enrollments.GetValueOrDefault(course.Id),
-            completions.GetValueOrDefault(course.Id) is var id && id != Guid.Empty ? id : null))
+        return courses.Select(course =>
+        {
+            EnrollmentStatus? enrollmentStatus =
+                enrollments.TryGetValue(course.Id, out var status) ? status : null;
+
+            return new CourseDto(
+                course.Id,
+                course.Title,
+                course.Description,
+                course.Capacity,
+                Math.Max(0, course.Capacity - enrollmentCounts.GetValueOrDefault(course.Id)),
+                course.IsActive,
+                enrollmentStatus,
+                completions.GetValueOrDefault(course.Id) is var id && id != Guid.Empty ? id : null);
+        })
             .ToList();
     }
 

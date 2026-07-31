@@ -32,6 +32,16 @@ public sealed class WorkflowIntegrationTests
     }
 
     [PostgresFact]
+    public async Task CourseListDoesNotTreatMissingEnrollmentAsEnrolled()
+    {
+        await using var dbContext = await TestDatabase.CreateResetAsync();
+        var courses = await new CourseService(dbContext, new FixedClock())
+            .GetCoursesAsync("learner-1001", default);
+
+        Assert.All(courses, course => Assert.Null(course.EnrollmentStatus));
+    }
+
+    [PostgresFact]
     public async Task CannotExceedCourseCapacity()
     {
         await using var dbContext = await TestDatabase.CreateResetAsync();

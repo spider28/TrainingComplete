@@ -34,9 +34,15 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapGet("/", () => Results.Ok(new
+{
+    service = "Training Completion API",
+    status = "running",
+    health = "/health",
+    openApi = "/openapi/v1.json"
+}));
 app.MapHealthChecks("/health");
 app.MapControllers();
 app.Run();
 
 public partial class Program;
-

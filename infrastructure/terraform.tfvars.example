@@ -1,11 +1,12 @@
-subscription_id          = "00000000-0000-0000-0000-000000000000"
+subscription_id          = "5942c9f7-3bda-4183-9b8a-6a7ec4d78594"
 location                 = "centralus"
 project_name             = "trainingcomplete"
 environment_name         = "dev"
 postgres_admin_username  = "trainingadmin"
-developer_public_ip      = "203.0.113.10"
-budget_notification_email = "you@example.com"
-monthly_budget_amount    = 30
+# developer_public_ip      = "203.0.113.10"  # home??
+developer_public_ip      = "205.213.104.126"  # public library
+budget_notification_email = "spiderman0828@hotmail.com"
+monthly_budget_amount    = 199
 deploy_compute           = false
 
 # Do not put postgres_admin_password here.
